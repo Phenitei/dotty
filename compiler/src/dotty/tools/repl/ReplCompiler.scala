@@ -210,8 +210,11 @@ class ReplCompiler(val directory: AbstractFile) extends Compiler {
   def typeOf(expr: String)(implicit state: State): Result[String] =
     typeCheck(expr).map { tree =>
       import dotc.ast.Trees._
+      import dotc.core.Types._
       implicit val ctx = state.run.runContext
       tree.rhs match {
+        // If the type is qualified, we want to see it's qualifications in the REPL!
+        case Block(xs, _) if xs.last.tpe.isInstanceOf[QualifiedType] => xs.last.tpe.show
         case Block(xs, _) => xs.last.tpe.widen.show
         case _ =>
           """Couldn't compute the type of your expression, so sorry :(
